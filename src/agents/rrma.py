@@ -23,7 +23,7 @@ User: But Hyderabad is too far from my location, Bangalore will be near to Chenn
 Assistant: That's correct. The warehouse in Bangalore will be a good option for you.
 
 ### Residual Memory:
-The warehouse in Bangalore will be a good option for the uses from Chennai as it is near to Chennai.
+The warehouse in Bangalore will be a good option for users from Chennai as it is near to Chennai.
 """
 
     def __init__(self, model_client: ChatCompletionClient):
