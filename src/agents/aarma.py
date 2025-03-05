@@ -8,7 +8,7 @@ These key criteria are the memory that is essential to understand the user's app
 Your task is to extract the key criteria from the Assistant's answer as memory and provide them as a response to the user.
 
 ## Instructions
-The memory should very precise and focused on different aspects of the answer that made it acceptable to the user.
+The memory should be very precise and focused on different aspects of the answer that made it acceptable to the user.
 The memory should be concise and clear, and it should add value to the future conversations.
 
 ## Examples
