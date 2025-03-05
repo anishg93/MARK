@@ -21,7 +21,7 @@ from src.customization.actions import CustomActions
 
 load_dotenv(override=True)
 
-print("================Stating Initialization================")
+print("================Starting Initialization================")
 az_openai_model_client = AzureOpenAIChatCompletionClient(
     azure_deployment=os.environ['AZURE_OPENAI_DEPLOYMENT_NAME'],
     model=os.environ['AZURE_OPENAI_MODEL_NAME'],
