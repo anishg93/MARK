@@ -1,0 +1,13 @@
+autogen-core==0.4.7
+autogen-agentchat==0.4.7
+autogen-ext[azure]==0.4.7
+autogen-ext[openai]==0.4.7
+autogen-ext[docker]==0.4.7
+SQLAlchemy==2.0.37
+aiohttp==3.11.11
+aiosqlite==0.20.0
+chainlit==2.0.603
+python-dotenv==1.0.1
+pandas==2.2.3
+matplotlib==3.10.1
+rich==13.9.4
