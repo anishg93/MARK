@@ -46,7 +46,7 @@ class KeyPointCoverageScore(EvaluationMetric):
                 expected_key_points = self._extract_key_points(expected, openai_client, openai_model)
                 high_similarity_count = self._calculate_similarity(actual_key_points, expected_key_points,
                                                                     embedding_client, embeddings_model, cosine_similarity_threshold)
-                if len(expected_key_points) > 0:
+                if len(actual_key_points) > 0:
                     key_point_score = high_similarity_count / len(actual_key_points)
                 else:
                     key_point_score = 0
