@@ -46,15 +46,19 @@ class KeyPointCoverageScore(EvaluationMetric):
                 expected_key_points = self._extract_key_points(expected, openai_client, openai_model)
                 high_similarity_count = self._calculate_similarity(actual_key_points, expected_key_points,
                                                                     embedding_client, embeddings_model, cosine_similarity_threshold)
-                key_point_score = high_similarity_count / len(expected_key_points)
+                if len(expected_key_points) > 0:
+                    key_point_score = high_similarity_count / len(actual_key_points)
+                else:
+                    key_point_score = 0
             else:
                 key_point_score = 0.0
             answer.set_kp_cov_cs_score(key_point_score)
             answers_with_scores.append(answer)
         
         if answers:
-            average_score = key_point_score / len(answers)
+            average_score = sum([answer.kp_cov_cs_score for answer in answers]) / len(answers)
         self.set_score(average_score)
+        print(f"Key Point Coverage Score: {average_score} from {len(answers)} answers.")
         return answers_with_scores
     
     def _convert_string_to_vector(self, string: str, embedding_client: AzureOpenAI, model: str) -> list[float]:
@@ -68,7 +72,10 @@ class KeyPointCoverageScore(EvaluationMetric):
             temperature=0.0,
             response_format={"type": "json_object"}
         ).choices[0].message.content
-        key_points = json.loads(response)["key_points"]
+        try:
+            key_points = json.loads(response)["key_points"]
+        except json.JSONDecodeError:
+            key_points = []
         return key_points
 
     def _calculate_similarity(self, actual_key_points: list[str], expected_key_points: list[str],

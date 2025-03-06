@@ -60,6 +60,7 @@ class InformationCaptureScore(EvaluationMetric):
         for answer in answers_with_scores:
             answer.set_info_cap_score(self.weights["key_point_cov_score"] * answer.kp_cov_cs_score + self.weights["info_cov_score"] * answer.in_cov_cs_score)
         
+        print(f"Information Capture Score: {score} from {len(answers)} answers")
         return answers_with_scores
 
     def get_score(self):

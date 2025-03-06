@@ -33,6 +33,7 @@ class InformationCoverageScore(EvaluationMetric):
         if answers:
             score = high_similarity_count / len(answers)
         self.set_score(score)
+        print(f"Information Coverage Score: {score} from {len(answers)} answers.")
         return answers_with_scores
     
     def _convert_string_to_vector(self, string: str, embedding_client: AzureOpenAI, model: str) -> list[float]:
