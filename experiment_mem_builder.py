@@ -40,7 +40,7 @@ assistant_answer_refined_memory_agent = AssistantAnswerRefinedMemoryAgent(model_
 residual_refined_memory_agent = ResidualRefinedMemoryAgent(model_client=az_openai_model_client).get_agent()
 user_question_refined_memory_agent = UserQuestionRefinedMemoryAgent(model_client=az_openai_model_client).get_agent()
 all_agents = [init_agent, assistant_answer_refined_memory_agent, residual_refined_memory_agent, user_question_refined_memory_agent]
-sql_copilot_group_chat = SelectorGroupChat(
+memory_builder_group_chat = SelectorGroupChat(
     participants=all_agents,
     model_client=az_openai_model_client,
     termination_condition=TerminationStrategy().get_termination_strategy(),
@@ -83,12 +83,12 @@ async def setting_update(settings):
 async def start_chat():
     print("=================Chat started================")
     await cl.ChatSettings([
-        TextInput(id="experiment", label="Experiment", placeholder="Mention Experiment Name", initial="SQL Copilot Experiment", tooltip="Name of the experiment")
+        TextInput(id="experiment", label="Experiment", placeholder="Mention Experiment Name", initial="Experiment 1", tooltip="Name of the experiment")
     ]).send()
 
 async def run_team(query: str):
     total_usage = RequestUsage(prompt_tokens=0, completion_tokens=0)
-    response_stream = sql_copilot_group_chat.run_stream(task=query)
+    response_stream = memory_builder_group_chat.run_stream(task=query)
     async for msg in response_stream:
         if hasattr(msg, "content"):
             message_content = f"Agent {msg.source.upper()}:\n{msg.content}"
@@ -130,24 +130,3 @@ async def chat(message: cl.Message):
 async def end_chat():
     print("=================Chat ended==================")
     await reset_all_agents(all_agents)
-
-@cl.set_starters
-async def set_starters():
-    return [
-        cl.Starter(
-            label="Simple Query",
-            message="What is the total amount of sales so far?",
-        ),
-        cl.Starter(
-            label="Simple Query with Join",
-            message="List all product line along the number of orders placed for each product line.",
-        ),
-        cl.Starter(
-            label="Complex Query with 3 joins",
-            message="How many employees are placing orders?",
-        ),
-        cl.Starter(
-            label="Irrelevant Query",
-            message="What is latest stock price of Microsoft?",
-        )
-    ]
