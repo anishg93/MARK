@@ -1,0 +1,92 @@
+import json
+
+from openai import AzureOpenAI
+
+from .base import EvaluationMetric
+from src.data.model import EvaluationData
+
+PROMPT_KEY_POINTS_EXTRACTION = """
+Extract key points from the text and respond in JSON format as a list of key points.
+The key points will be used to evaluate the key point coverage score.
+
+Example:
+User: "I like to eat apples and bananas. I love to explore new places."
+Assistant: {"key_points": ["eat apples", "eat bananas", "explore new places"]}
+"""
+
+class KeyPointCoverageScore(EvaluationMetric):
+    def __init__(self):
+        super().__init__("KeyPointCoverageScore")
+    
+    def evaluate(self, **kwargs) -> list[EvaluationData]:
+        """
+        answers: List[Dict[str, str]]
+        Tasks:
+        - Extract key phrases/keywords/key points from the actual answer using the OpenAI model.
+        - Check if the key points are present in the expected answer using semantic similarity.
+        - Calculate the score based on the number of key points present in the expected answer.
+        """
+        average_score = 0.0
+        answers_with_scores = []
+        answers : list[EvaluationData] = kwargs.get("answers")
+        openai_client = kwargs.get("openai_client")
+        embedding_client = kwargs.get("embedding_client")
+        openai_model = kwargs.get("openai_model")
+        embeddings_model = kwargs.get("embedding_model")
+        cosine_similarity_threshold = kwargs.get("cosine_similarity_threshold")
+        
+        if not answers or not openai_client or not embedding_client or not openai_model or not embeddings_model:
+            raise ValueError("Answers, OpenAI client, embedding client, OpenAI model, and embeddings model are required.")
+        
+        for answer in answers:
+            actual = answer.actual_answer
+            expected = answer.expected_answer
+            if actual and expected:
+                actual_key_points = self._extract_key_points(actual, openai_client, openai_model)
+                expected_key_points = self._extract_key_points(expected, openai_client, openai_model)
+                high_similarity_count = self._calculate_similarity(actual_key_points, expected_key_points,
+                                                                    embedding_client, embeddings_model, cosine_similarity_threshold)
+                key_point_score = high_similarity_count / len(expected_key_points)
+            else:
+                key_point_score = 0.0
+            answer.set_kp_cov_cs_score(key_point_score)
+            answers_with_scores.append(answer)
+        
+        if answers:
+            average_score = key_point_score / len(answers)
+        self.set_score(average_score)
+        return answers_with_scores
+    
+    def _convert_string_to_vector(self, string: str, embedding_client: AzureOpenAI, model: str) -> list[float]:
+        return embedding_client.embeddings.create(input=string, model=model).data[0].embedding
+        
+    def _extract_key_points(self, text: str, openai_client, model: str) -> list[str]:
+        response = openai_client.chat.completions.create(
+            model=model,
+            messages=[{"role": "system", "content": PROMPT_KEY_POINTS_EXTRACTION}, {"role": "user", "content": text}],
+            max_tokens=100,
+            temperature=0.0,
+            response_format={"type": "json_object"}
+        ).choices[0].message.content
+        key_points = json.loads(response)["key_points"]
+        return key_points
+
+    def _calculate_similarity(self, actual_key_points: list[str], expected_key_points: list[str],
+                              embedding_client: AzureOpenAI, model: str, threshold: float) -> int:
+        high_similarity_count = 0
+        for actual_key_point in actual_key_points:
+            actual_vector = self._convert_string_to_vector(actual_key_point, embedding_client, model)
+            for expected_key_point in expected_key_points:
+                expected_vector = self._convert_string_to_vector(expected_key_point, embedding_client, model)
+                similarity = self._calculate_cosine_similarity(actual_vector, expected_vector)
+                if similarity > threshold:
+                    high_similarity_count += 1
+                    break
+        return high_similarity_count
+    
+    def _calculate_cosine_similarity(self, actual: list[float], expected: list[float]) -> float:
+        dot_product = sum([a * b for a, b in zip(actual, expected)])
+        magnitude_actual = sum([a ** 2 for a in actual]) ** 0.5
+        magnitude_expected = sum([b ** 2 for b in expected]) ** 0.5
+        similarity = dot_product / (magnitude_actual * magnitude_expected)
+        return similarity
