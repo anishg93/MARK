@@ -5,15 +5,11 @@ import json
 from dotenv import load_dotenv
 from argparse import ArgumentParser
 
-from openai import AzureOpenAI
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 from autogen_agentchat.base import Response
 from autogen_agentchat.messages import TextMessage
 
 from src.agents.cba import ChatbotAgent
-from src.persistence.database_setup import DataPersistence
-from src.memory.azure_ai_search import AzureAISearch
-from src.service.memory_builder import MemoryBuilder
 from src.data.med_mcqa import MedMCQADataSet
 from src.data.model import EvaluationData
 
@@ -29,26 +25,7 @@ az_openai_model_client = AzureOpenAIChatCompletionClient(
     azure_endpoint=os.environ['AZURE_OPENAI_BASE_URL'],
     api_key=os.environ['AZURE_OPENAI_API_KEY']
 )
-az_embedding_client = AzureOpenAI(
-    azure_endpoint=os.environ['AZURE_OPENAI_BASE_URL'],
-    api_key=os.environ['AZURE_OPENAI_API_KEY'],
-    api_version=os.environ['AZURE_OPENAI_EMBEDDING_API_VERSION'],
-)
-az_embedding_model = os.environ['AZURE_OPENAI_EMBEDDING_MODEL']
-az_ai_search_client = AzureAISearch(
-    endpoint=os.environ['AZURE_SEARCH_ENDPOINT'],
-    key=os.environ['AZURE_SEARCH_API_KEY'],
-    index_name=os.environ['AZURE_SEARCH_INDEX_NAME']
-)
-az_ai_search_client.create_index(model=az_embedding_client)
 chatbot_agent = ChatbotAgent(model_client=az_openai_model_client).get_agent()
-memory_builder = MemoryBuilder(
-    model_client=az_openai_model_client,
-    search_client=az_ai_search_client,
-    embedding_client=az_embedding_client,
-    embedding_model=az_embedding_model
-)
-data_persistence = DataPersistence(enable_storage_provider=False)
 print("================Initialization Complete===============")
 
 async def run_agent(eval_data: EvaluationData) -> EvaluationData:

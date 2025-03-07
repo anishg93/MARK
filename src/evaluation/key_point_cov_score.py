@@ -5,27 +5,22 @@ from openai import AzureOpenAI
 from .base import EvaluationMetric
 from src.data.model import EvaluationData
 
-PROMPT_KEY_POINTS_EXTRACTION = """
-Extract key points from the text and respond in JSON format as a list of key points.
-The key points will be used to evaluate the key point coverage score.
-
-Example:
-User: "I like to eat apples and bananas. I love to explore new places."
-Assistant: {"key_points": ["eat apples", "eat bananas", "explore new places"]}
+PROMPT_KEY_POINTS_EXTRACTION = f"""
+You are an AI assistant to help with extracting relevant, coherent and key topics from a given context.
+You will be given a sentence with texts and your task is to extract the key topics from the given context by understanding the importance and respond in JSON format.
+You have to extract top NUM_TOPICS key topics from the given context.
+Make sure each topic does not exceed MAX_WORDS_PER_TOPIC words.
+Response format: {{"key_points": ["topic1", "topic2", "topic3", "topic4", "topic5"]}}
 """
 
 class KeyPointCoverageScore(EvaluationMetric):
     def __init__(self):
+        self.num_topics = 5
+        self.max_words_per_topic = 2
+        self.use_cosine_similarity = False
         super().__init__("KeyPointCoverageScore")
     
     def evaluate(self, **kwargs) -> list[EvaluationData]:
-        """
-        answers: List[Dict[str, str]]
-        Tasks:
-        - Extract key phrases/keywords/key points from the actual answer using the OpenAI model.
-        - Check if the key points are present in the expected answer using semantic similarity.
-        - Calculate the score based on the number of key points present in the expected answer.
-        """
         average_score = 0.0
         answers_with_scores = []
         answers : list[EvaluationData] = kwargs.get("answers")
@@ -67,7 +62,8 @@ class KeyPointCoverageScore(EvaluationMetric):
     def _extract_key_points(self, text: str, openai_client, model: str) -> list[str]:
         response = openai_client.chat.completions.create(
             model=model,
-            messages=[{"role": "system", "content": PROMPT_KEY_POINTS_EXTRACTION}, {"role": "user", "content": text}],
+            messages=[{"role": "system", "content": PROMPT_KEY_POINTS_EXTRACTION.replace("NUM_TOPICS", str(self.num_topics)).replace("MAX_WORDS_PER_TOPIC", str(self.max_words_per_topic))},
+                      {"role": "user", "content": f"Extract important and relevant key topics from the given text : {text}"}],
             max_tokens=100,
             temperature=0.0,
             response_format={"type": "json_object"}
@@ -76,6 +72,7 @@ class KeyPointCoverageScore(EvaluationMetric):
             key_points = json.loads(response)["key_points"]
         except json.JSONDecodeError:
             key_points = []
+        print(f"Extracted Key Points: {key_points}")
         return key_points
 
     def _calculate_similarity(self, actual_key_points: list[str], expected_key_points: list[str],
@@ -85,10 +82,15 @@ class KeyPointCoverageScore(EvaluationMetric):
             actual_vector = self._convert_string_to_vector(actual_key_point, embedding_client, model)
             for expected_key_point in expected_key_points:
                 expected_vector = self._convert_string_to_vector(expected_key_point, embedding_client, model)
-                similarity = self._calculate_cosine_similarity(actual_vector, expected_vector)
-                if similarity > threshold:
-                    high_similarity_count += 1
-                    break
+                if self.use_cosine_similarity:
+                    similarity = self._calculate_cosine_similarity(actual_vector, expected_vector)
+                    if similarity > threshold:
+                        high_similarity_count += 1
+                        break
+                else:
+                    if actual_key_point.lower() == expected_key_point.lower():
+                        high_similarity_count += 1
+                        break
         return high_similarity_count
     
     def _calculate_cosine_similarity(self, actual: list[float], expected: list[float]) -> float:

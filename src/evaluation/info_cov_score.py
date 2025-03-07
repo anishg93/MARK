@@ -1,3 +1,5 @@
+import re
+import numpy as np
 from openai import AzureOpenAI
 
 from .base import EvaluationMetric
@@ -16,32 +18,37 @@ class InformationCoverageScore(EvaluationMetric):
         model = kwargs.get("model")
         if not answers or not cosine_similarity_threshold or not embedding_client or not model:
             raise ValueError("Answers, cosine similarity threshold, embedding client, and model are required.")
-        high_similarity_count = 0
         for answer in answers:
-            actual = answer.actual_answer
+            similarity_scores = []
+            info_coverage_scores = []
+            generated = answer.actual_answer
             expected = answer.expected_answer
-            if actual and expected:
-                actual_vector = self._convert_string_to_vector(actual, embedding_client, model)
-                expected_vector = self._convert_string_to_vector(expected, embedding_client, model)
-                similarity = self._calculate_cosine_similarity(actual_vector, expected_vector)
-                if similarity > cosine_similarity_threshold:
-                    high_similarity_count += 1
-            else:
-                similarity = 0.0
-            answer.set_in_cov_cs_score(similarity)
+            if generated and expected:
+                generated_sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9])', generated)
+                expected_sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9])', expected)
+                generated_vectors = self._convert_string_to_vector(generated_sentences, embedding_client, model)
+                expected_vectors = self._convert_string_to_vector(expected_sentences, embedding_client, model)
+                similarity_scores = [[float(self._calculate_cosine_similarity(generated_vector, expected_vector)) for expected_vector in expected_vectors] for generated_vector in generated_vectors]
+                for i in range(len(similarity_scores)):
+                    x = [sim for sim in similarity_scores[i] if sim >= np.quantile(similarity_scores[i], cosine_similarity_threshold)]
+                    info_coverage_scores.append(len(x))
+                info_coverage_score = float(np.mean([i / len(expected_sentences) for i in info_coverage_scores]))
+            else: 
+                info_coverage_score = 0.0
+            answer.set_in_cov_cs_score(info_coverage_score)
             answers_with_scores.append(answer)
         if answers:
-            score = high_similarity_count / len(answers)
+            score = sum([answer.in_cov_cs_score for answer in answers]) / len(answers)
         self.set_score(score)
         print(f"Information Coverage Score: {score} from {len(answers)} answers.")
         return answers_with_scores
     
-    def _convert_string_to_vector(self, string: str, embedding_client: AzureOpenAI, model: str) -> list[float]:
-        return embedding_client.embeddings.create(input=string, model=model).data[0].embedding
+    def _convert_string_to_vector(self, sentences: list[str], embedding_client: AzureOpenAI, model: str) -> list[float]:
+        return [embedding_client.embeddings.create(input=sentence, model=model).data[0].embedding for sentence in sentences]
     
-    def _calculate_cosine_similarity(self, actual: list[float], expected: list[float]) -> float:
-        dot_product = sum([a * b for a, b in zip(actual, expected)])
-        magnitude_actual = sum([a ** 2 for a in actual]) ** 0.5
+    def _calculate_cosine_similarity(self, generated: list[float], expected: list[float]) -> float:
+        dot_product = sum([a * b for a, b in zip(generated, expected)])
+        magnitude_generated = sum([a ** 2 for a in generated]) ** 0.5
         magnitude_expected = sum([b ** 2 for b in expected]) ** 0.5
-        similarity = dot_product / (magnitude_actual * magnitude_expected)
+        similarity = dot_product / (magnitude_generated * magnitude_expected)
         return similarity

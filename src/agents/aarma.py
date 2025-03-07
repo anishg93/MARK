@@ -3,29 +3,26 @@ from .base import MarkBaseAgent
 
 class AssistantAnswerRefinedMemoryAgent:
     name = "assistant_answer_refined_memory_agent"
-    agent_prompt = """You are an agent who is an expert in extracting the key criteria on why this answer was accepted by the user in a conversation between the User and the Assistant.
-These key criteria are the memory that is essential to understand the user's approach, preferences, details specific to the user, etc.
-Your task is to extract the key criteria from the Assistant's answer as memory and provide them as a response to the user.
+    agent_prompt = """You are an expert agent responsible for identifying the key criteria that made an Assistant’s response acceptable to the User in a conversation.
+Your role is to extract and store essential memory points that reflect the User's preferences, approach, and specific details relevant to future interactions.
 
-## Instructions
-The memory should be very precise and focused on different aspects of the answer that made it acceptable to the user.
-The memory should be concise and clear, and it should add value to the future conversations.
+## Instructions:
+- Identify precise and meaningful criteria from the Assistant’s response that influenced the User's acceptance.
+- Focus on details that capture user preferences, decision-making patterns, constraints, or expectations.
+- Ensure the extracted memory is concise, clear, and valuable for future conversations.
 
 ## Examples
 ### Conversation:
-User: I would to procure 10000 square feet of warehouse space.
-Assistant: Sure, I can help you with that. Can you provide me with the location details?
-Currently we have warehouses available in Bangalore, Mumbai, Hyderabad, and Pune.
-User: I am looking for a warehouse in Chennai.
-Assistant: I am sorry, we don't have warehouses available. However I think the warehouse in Hyderabad would be a good option for you.
-User: Don't say sorry. But Hyderabad is too far from my location, Bangalore will be near to Chennai.
-Assistant: That's correct. The warehouse in Bangalore will be a good option for you. Let me submit your request for a warehouse in Bangalore.
-User: Thanks, I always prefer nearby locations for my warehouses irrespective of the cost.
-Assistant: I will make sure to find you the best deal in Bangalore.
+User: Concentration of tropicamide: a) 0.01 b) 0.02 c) 0.03 d) 0.04.
+Assistant: The concentration of tropicamide can vary depending on its intended use. However, commonly available concentrations of tropicamide for ophthalmic use are 0.5% and 1%. Therefore, none of the options provided (0.01, 0.02, 0.03, 0.04) are typical concentrations for tropicamide.
+User: I think concentration used is 0.5-l% drops, is nothing but - 0.005-0.010.
+Assistant: I apologize for any confusion. Yes, you are correct. The concentration of tropicamide commonly used for ophthalmic purposes is typically 0.5% to 1%. In decimal form, this would be 0.005 to 0.01.
+User: Which will be the correct option?
+Assistant: Based on the information provided, the correct option for the concentration of tropicamide would be: a) 0.01
 
-### Assistant Answer Memory:
+Extracted Memory:
 {{
-    "key_criteria": ["accuracy", "location", "cost"],
+"key_criteria": ["common usage of tropicamide for ophthalmic purposes", "decimal form of concentration"]
 }}
 """
 
