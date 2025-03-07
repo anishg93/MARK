@@ -34,7 +34,7 @@ class KeyPointCoverageScore(EvaluationMetric):
             raise ValueError("Answers, OpenAI client, embedding client, OpenAI model, and embeddings model are required.")
         
         for answer in answers:
-            actual = answer.actual_answer
+            actual = answer.generated_answer
             expected = answer.expected_answer
             if actual and expected:
                 actual_key_points = self._extract_key_points(actual, openai_client, openai_model)

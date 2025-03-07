@@ -35,7 +35,7 @@ async def run_agent(eval_data: EvaluationData) -> EvaluationData:
     async for msg in response_stream:
         if isinstance(msg, Response):
             message_content = msg.chat_message.content
-            eval_data.actual_answer = message_content
+            eval_data.generated_answer = message_content
             return eval_data
         else:
             print(f"*** [AGENT_ERROR]: {msg}")

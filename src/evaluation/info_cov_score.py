@@ -21,7 +21,7 @@ class InformationCoverageScore(EvaluationMetric):
         for answer in answers:
             similarity_scores = []
             info_coverage_scores = []
-            generated = answer.actual_answer
+            generated = answer.generated_answer
             expected = answer.expected_answer
             if generated and expected:
                 generated_sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9])', generated)

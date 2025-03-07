@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 class EvaluationData(BaseModel):
     question: str
-    actual_answer: str = ""
+    generated_answer: str = ""
     expected_answer: str | None = None
     in_cov_cs_score: float = 0.0
     kp_cov_cs_score: float = 0.0
@@ -15,7 +15,7 @@ class EvaluationData(BaseModel):
                          kp_cov_cs_score=kp_cov_cs_score, info_cap_score=info_cap_score)
     
     def set_actual_answer(self, answer: str):
-        self.actual_answer = answer
+        self.generated_answer = answer
     
     def set_expected_answer(self, answer: str):
         self.expected_answer = answer
@@ -32,7 +32,7 @@ class EvaluationData(BaseModel):
     def to_dict(self):
         return {
             "question": self.question,
-            "actual_answer": self.actual_answer,
+            "actual_answer": self.generated_answer,
             "expected_answer": self.expected_answer,
             "in_cov_cs_score": self.in_cov_cs_score,
             "kp_cov_cs_score": self.kp_cov_cs_score,
