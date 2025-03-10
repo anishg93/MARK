@@ -3,7 +3,9 @@ from .base import MarkBaseAgent
 
 class ChatbotAgent:
     name = "Assistant"
-    agent_prompt = """You are an helpful assistant that can provide information and answer questions."""
+    agent_prompt = """You are an helpful assistant that can provide information and answer questions.
+    You will be given a question and 4 answer choices and you need to select the best answer from the choices.
+    """
 
     def __init__(self, model_client: ChatCompletionClient):
         self.agent = MarkBaseAgent(

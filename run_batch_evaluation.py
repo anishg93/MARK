@@ -58,13 +58,11 @@ def load_data(file_path: str) -> list[EvaluationData]:
     with open(file_path, "r") as f:
         for line in f:
             answer = json.loads(line)
-            if "expected_answer" not in answer or answer["expected_answer"] is None:
-                evaluation_data = EvaluationData(question=answer["question"],
-                                             actual_answer=answer["actual_answer"])
-            else:
-                evaluation_data = EvaluationData(question=answer["question"],
-                                                actual_answer=answer["actual_answer"],
-                                                expected_answer=answer["expected_answer"])
+            evaluation_data = EvaluationData(question=answer["question"],
+                                            generated_answer=answer["generated_answer"],
+                                            expected_answer=answer["expected_answer"] if "expected_answer" in answer else None,
+                                            session_id=answer["session_id"] if "session_id" in answer else None,
+                                            turn_id=answer["turn_id"]) if "turn_id" in answer else None
             answers.append(evaluation_data)
     return answers
 

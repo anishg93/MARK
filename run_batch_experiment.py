@@ -25,10 +25,10 @@ az_openai_model_client = AzureOpenAIChatCompletionClient(
     azure_endpoint=os.environ['AZURE_OPENAI_BASE_URL'],
     api_key=os.environ['AZURE_OPENAI_API_KEY']
 )
-chatbot_agent = ChatbotAgent(model_client=az_openai_model_client).get_agent()
 print("================Initialization Complete===============")
 
 async def run_agent(eval_data: EvaluationData) -> EvaluationData:
+    chatbot_agent = ChatbotAgent(model_client=az_openai_model_client).get_agent()
     query_message = TextMessage(content=eval_data.question, source="User")
     message_history = [query_message]
     response_stream = chatbot_agent.on_messages_stream(messages=message_history, cancellation_token=None)
@@ -36,6 +36,8 @@ async def run_agent(eval_data: EvaluationData) -> EvaluationData:
         if isinstance(msg, Response):
             message_content = msg.chat_message.content
             eval_data.generated_answer = message_content
+            eval_data.prompt_token_count = msg.chat_message.models_usage.prompt_tokens
+            eval_data.completion_token_count = msg.chat_message.models_usage.completion_tokens
             return eval_data
         else:
             print(f"*** [AGENT_ERROR]: {msg}")
@@ -47,7 +49,12 @@ def load_data(file_path: str, limit: int = 10, type: str = "med_mcqa") -> list[E
         dataset = MedMCQADataSet(file_path)
         dataset.process_data(limit=limit)
         data = dataset.get_data()
-    return [EvaluationData(question=d["question"], expected_answer=d["expected_answer"]) for d in data]
+    return [EvaluationData(
+        question=d["question"],
+        expected_answer=d["expected_answer"],
+        session_id=str(uuid.uuid4()),
+        turn_id=str(uuid.uuid4()),
+    ) for d in data]
 
 def persist_experiment(answers: list[EvaluationData], file_path: str = ".evaluation_input_data"):
     if not os.path.exists(file_path):
@@ -70,7 +77,14 @@ if __name__ == "__main__":
     limit = args.limit
     type = args.type
     answers = load_data(file_path=file, limit=limit, type=type)
+    print(f"Loaded {len(answers)} records from {file}.")
     evaluation_results = []
     for answer in answers:
-        evaluation_results.append(asyncio.run(run_agent(answer)))
+        try:
+            evaluation_results.append(asyncio.run(run_agent(answer)))
+            if len(evaluation_results) % 10 == 0:
+                print(f"Processed {len(evaluation_results)} records.")
+        except Exception as e:
+            print(f"Error processing answer: {e}")
+            continue
     persist_experiment(answers=evaluation_results)
