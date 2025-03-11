@@ -169,3 +169,25 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Docker
+**/Dockerfile
+**/docker-compose.yml
+**/.dockerignore
+
+# VSCode
+**/.vscode/
+**/*.code-workspace
+
+# Local Data Folders
+**/.local_data/**
+
+# ChainLit
+**/.chainlit/
+
+# SQLlite
+**/*.sqlite.db
+
+# Evaluation Data
+**/.evaluation_input_data/*
+**/.evaluation_output_data/*
