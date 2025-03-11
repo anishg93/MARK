@@ -1,3 +1,4 @@
+import json
 from openai import AzureOpenAI
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 from autogen_agentchat.agents import AssistantAgent, CodeExecutorAgent, UserProxyAgent
@@ -48,7 +49,7 @@ class MemoryBuilder:
     def encode_text(self, text: str) -> list[float]:
         return self.embedding_client.embeddings.create(input=text, model=self.embedding_model).data[0].embedding
     
-    async def build_memory(self, conversation: list[AgentEvent | ChatMessage | TaskResult | TextMessage ], user: str) -> list[Memory]:
+    async def build_memory(self, conversation: list[AgentEvent | ChatMessage | TaskResult | TextMessage ], user: str, agent: str) -> list[Memory]:
         if len(conversation) < 2:
             return []
         conversation_str = ""
@@ -72,23 +73,46 @@ class MemoryBuilder:
         async for msg in memory_builder_response_stream:
             if isinstance(msg, TaskResult):
                 continue
-            agent = msg.source
-            memory = msg.content
-            print(f"Agent: {agent}, Memory: {memory}")
-            if agent == ResidualRefinedMemoryAgent.name:
-                memory = ResidualMemory(memory=memory, user=user)
-            elif agent == UserQuestionRefinedMemoryAgent.name:
-                memory = UserQuestionMemory(memory=memory, user=user)
-            elif agent == AssistantAnswerRefinedMemoryAgent.name:
-                memory = AssistantResponseMemory(memory=memory, user=user)
-            elif agent == "user":
+            memory_agent = msg.source
+            memory_txt = msg.content
+            print(f"Agent: {memory_agent}, Memory: {memory_txt}")
+            if memory_agent == ResidualRefinedMemoryAgent.name:
+                try:
+                    for memory_value in json.loads(memory_txt)["residual_memory"]:
+                        memory = ResidualMemory(memory=memory_value, user=user, agent=agent)
+                        memories.append(memory)
+                except Exception as e:
+                    print(f"Error parsing memory: {e}")
+                    memory = ResidualMemory(memory=memory_txt, user=user, agent=agent)
+                    memories.append(memory)
+            elif memory_agent == UserQuestionRefinedMemoryAgent.name:
+                try:
+                    for memory_value in json.loads(memory_txt)["key_facts_about_user"]:
+                        memory = UserQuestionMemory(memory=memory_value, user=user, agent=agent)
+                        memories.append(memory)
+                except Exception as e:
+                    print(f"Error parsing memory: {e}")
+                    memory = UserQuestionMemory(memory=memory_txt, user=user, agent=agent)
+                    memories.append(memory)
+            elif memory_agent == AssistantAnswerRefinedMemoryAgent.name:
+                try:
+                    for memory_value in json.loads(memory_txt)["key_criteria"]:
+                        memory = AssistantResponseMemory(memory=memory_value, user=user, agent=agent)
+                        memories.append(memory)
+                except Exception as e:
+                    print(f"Error parsing memory: {e}")
+                    memory = AssistantResponseMemory(memory=memory_txt, user=user, agent=agent)
+                    memories.append(memory)
+            elif memory_agent == "user":
                 continue
             else:
-                raise ValueError(f"Unknown agent {agent}")
-            if len(conversation) > 2:
-                memories.append(memory)
-            else:
-                memories = [memory] if isinstance(memory, AssistantResponseMemory) else memories
+                raise ValueError(f"Unknown agent {memory_agent}")
+            if len(conversation) <= 2:
+                tmp_memories = []
+                for memory in memories:
+                    if isinstance(memory, AssistantResponseMemory):
+                        tmp_memories.append(memory)
+                memories = tmp_memories
         await self._reset_all_agents(self.all_agents)
         return memories
 

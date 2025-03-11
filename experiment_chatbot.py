@@ -119,7 +119,7 @@ async def end_chat():
     await cl_msg.send()
     
     # Memory Builder
-    memory_builder_response = await memory_builder.build_memory(conversation=cl.user_session.get("message_history"), user="user")
+    memory_builder_response = await memory_builder.build_memory(conversation=cl.user_session.get("message_history"), user="user1", agent="medical_chatbot")
     memory_builder_string = "\n".join([memory.type + ": " + memory.memory for memory in memory_builder_response])
     cl_msg = cl.Message(content="Memory Builder Response:\n" + memory_builder_string,
                         author="memory", metadata={"experiment": cl.context.session.chat_settings.get("experiment", None)})

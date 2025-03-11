@@ -10,12 +10,12 @@ You are an AI assistant to help with extracting relevant, coherent and key topic
 You will be given a sentence with texts and your task is to extract the key topics from the given context by understanding the importance and respond in JSON format.
 You have to extract top NUM_TOPICS key topics from the given context.
 Make sure each topic does not exceed MAX_WORDS_PER_TOPIC words.
-Response format: {{"key_points": ["topic1", "topic2", "topic3", "topic4", "topic5"]}}
+Response format: {{"key_points": ["topic1", "topic2", "topic3"]}}
 """
 
 class KeyPointCoverageScore(EvaluationMetric):
     def __init__(self):
-        self.num_topics = 5
+        self.num_topics = 3
         self.max_words_per_topic = 2
         self.use_cosine_similarity = False
         super().__init__("KeyPointCoverageScore")
