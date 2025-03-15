@@ -39,6 +39,23 @@ class AzureAISearch:
             return
         self.search_client.upload_documents(documents=[mem.to_dict() for mem in memories])
     
+    def count_memories(self, type: str, user: str = None, agent: str = None, top: int = 200) -> int:
+        query_filter = f"type eq '{type}'"
+        if user:
+            query_filter += f" and user eq '{user}'"
+        if agent:
+            query_filter += f" and agent eq '{agent}'"
+        results = self.search_client.search(
+            search_text="",
+            filter=query_filter,
+            top=top,
+            select=["created_at"],
+        )
+        count = 0
+        for result in results:
+            count += 1
+        return count
+    
     def search_memory(self, query: str, query_vector: list[float], type: str,
                       user: str = None, agent: str = None, top: int = 3, relevance_threshold: int = 0.7) -> list[Memory]:
         search_vector = VectorizedQuery(vector=query_vector, k_nearest_neighbors=top, fields="memoryVector")

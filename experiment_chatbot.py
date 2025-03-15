@@ -38,7 +38,6 @@ az_ai_search_client = AzureAISearch(
     index_name=os.environ['AZURE_SEARCH_INDEX_NAME']
 )
 az_ai_search_client.create_index(model=az_embedding_client)
-chatbot_agent = ChatbotAgent(model_client=az_openai_model_client).get_agent()
 memory_builder = MemoryBuilder(
     model_client=az_openai_model_client,
     search_client=az_ai_search_client,
@@ -75,6 +74,7 @@ async def start_chat():
     cl.user_session.set("total_usage", RequestUsage(prompt_tokens=0, completion_tokens=0))
 
 async def run_agent(query: str):
+    chatbot_agent = ChatbotAgent(model_client=az_openai_model_client).get_agent()
     query_message = TextMessage(content=query, source="User")
     total_usage = cl.user_session.get("total_usage")
     message_history = cl.user_session.get("message_history")
