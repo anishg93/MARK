@@ -18,6 +18,11 @@ from src.service.memory_builder import MemoryBuilder
 
 load_dotenv(override=True)
 
+# Assistant Type: To use the assistant with memory, set this to True, otherwise set it to False.
+# If set to False, the assistant will use the memory builder to build memory and persist it.
+# If set to True, the assistant will use the memory builder to retrieve memory and use it in the conversation, it will not build or persist memory.
+USE_MEMORY = True
+
 print("================Starting Initialization================")
 az_openai_model_client = AzureOpenAIChatCompletionClient(
     azure_deployment=os.environ['AZURE_OPENAI_DEPLOYMENT_NAME'],
@@ -47,6 +52,35 @@ memory_builder = MemoryBuilder(
 data_persistence = DataPersistence(enable_storage_provider=False)
 print("================Initialization Complete===============")
 
+def get_memory(query: str, top: int = 2, threshold: float = 0.02) -> str:
+    query_vector = memory_builder.encode_text(query)
+    residual_memories = az_ai_search_client.search_memory(
+        query=query,
+        query_vector=query_vector,
+        type="residual",
+        top=top,
+        relevance_threshold=threshold
+    )
+    user_question_memories = az_ai_search_client.search_memory(
+        query=query,
+        query_vector=query_vector,
+        type="user_question",
+        top=top,
+        relevance_threshold=threshold
+    )
+    assistant_memories = az_ai_search_client.search_memory(
+        query=query,
+        query_vector=query_vector,
+        type="assistant_response",
+        top=top,
+        relevance_threshold=threshold
+    )
+    return f"""
+{memory_builder.get_memory_string("LLM Response", assistant_memories)}
+{memory_builder.get_memory_string("Residual", residual_memories)}
+{memory_builder.get_memory_string("User Question", user_question_memories)}
+    """
+
 @cl.data_layer
 def get_data_layer():
     return SQLAlchemyDataLayer(conninfo=data_persistence.get_connection_url_async(), storage_provider=data_persistence.get_storage_provider())
@@ -74,7 +108,11 @@ async def start_chat():
     cl.user_session.set("total_usage", RequestUsage(prompt_tokens=0, completion_tokens=0))
 
 async def run_agent(query: str):
-    chatbot_agent = ChatbotAgent(model_client=az_openai_model_client).get_agent()
+    chatbot_agent = ChatbotAgent(model_client=az_openai_model_client, use_memory=USE_MEMORY).get_agent()
+    if USE_MEMORY:
+        memory = get_memory(query)
+        print(f"=======> Memory: {memory}")
+        query = f"{query}\n{memory}"
     query_message = TextMessage(content=query, source="User")
     total_usage = cl.user_session.get("total_usage")
     message_history = cl.user_session.get("message_history")
@@ -119,15 +157,15 @@ async def end_chat():
     await cl_msg.send()
     
     # Memory Builder
-    memory_builder_response = await memory_builder.build_memory(conversation=cl.user_session.get("message_history"), user="user1", agent="medical_chatbot")
-    memory_builder_string = "\n".join([memory.type + ": " + memory.memory for memory in memory_builder_response])
-    cl_msg = cl.Message(content="Memory Builder Response:\n" + memory_builder_string,
-                        author="memory", metadata={"experiment": cl.context.session.chat_settings.get("experiment", None)})
-    await cl_msg.send()
-    
-    # Persist Memory
-    await memory_builder.persist_memory(memory_builder_response)
-    
+    if not USE_MEMORY:
+        memory_builder_response = await memory_builder.build_memory(conversation=cl.user_session.get("message_history"), user="user1", agent="medical_chatbot")
+        memory_builder_string = "\n".join([memory.type + ": " + memory.memory for memory in memory_builder_response])
+        cl_msg = cl.Message(content="Memory Builder Response:\n" + memory_builder_string,
+                            author="memory", metadata={"experiment": cl.context.session.chat_settings.get("experiment", None)})
+        await cl_msg.send()
+        # Persist Memory
+        await memory_builder.persist_memory(memory_builder_response)
+        
     # Reset
     cl.user_session.set("message_history", [])
     cl.user_session.set("total_usage", RequestUsage(prompt_tokens=0, completion_tokens=0))

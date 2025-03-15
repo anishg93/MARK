@@ -108,3 +108,11 @@ class MemoryBuilder:
                 memory.memoryVector = self.encode_text(memory.memory)
             memories_with_embeddings.append(memory)
         await self.search_client.upload_memories(memories=memories_with_embeddings)
+    
+    def get_memory_string(self, type: str, memories: list[Memory]) -> str:
+        memory_string = f"{type} Memories:\n"
+        if not memories:
+            return memory_string
+        for memory in memories:
+            memory_string += f"- {memory.memory}\n"
+        return memory_string
