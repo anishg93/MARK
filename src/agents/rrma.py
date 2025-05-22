@@ -36,7 +36,7 @@ Assistant: Based on the available information, the closest correct option is a) 
 ### Extracted Residual Memory:
 
 {{
-    "residual_memory": [
+    "residual_refined_memory": [
         "Tropicamide concentrations commonly used for ophthalmic purposes are 0.5%-1%. Future responses should align with this as a reference point.",
         "Decimal representation (0.005-0.01) is relevant when discussing concentrations. The Assistant should incorporate this format when presenting similar information.",
         "User expects verification of medical concentrations rather than general information. Future interactions should prioritize confirming specific values over broad explanations.",

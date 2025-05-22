@@ -56,7 +56,7 @@ class MemoryBuilder:
             memory_txt = memory_txt.replace("{{", "{").replace("}}", "}")
             print(f"Residual Memory: {memory_txt}")
             try:
-                for memory_value in json.loads(memory_txt)["residual_memory"]:
+                for memory_value in json.loads(memory_txt)["residual_refined_memory"]:
                     memory = ResidualMemory(memory=memory_value, user=user, agent=agent)
                     memories.append(memory)
             except Exception as e:
@@ -70,7 +70,7 @@ class MemoryBuilder:
             memory_txt = memory_txt.replace("{{", "{").replace("}}", "}")
             print(f"User Question Memory: {memory_txt}")
             try:
-                for memory_value in json.loads(memory_txt)["key_facts_about_user"]:
+                for memory_value in json.loads(memory_txt)["user_question_refined_memory"]:
                     memory = UserQuestionMemory(memory=memory_value, user=user, agent=agent)
                     memories.append(memory)
             except Exception as e:
@@ -84,7 +84,7 @@ class MemoryBuilder:
             memory_txt = memory_txt.replace("{{", "{").replace("}}", "}")
             print(f"Assistant Response Memory: {memory_txt}")
             try:
-                for memory_value in json.loads(memory_txt)["key_criteria"]:
+                for memory_value in json.loads(memory_txt)["llm_response_refined_memory"]:
                     memory = AssistantResponseMemory(memory=memory_value, user=user, agent=agent)
                     memories.append(memory)
             except Exception as e:

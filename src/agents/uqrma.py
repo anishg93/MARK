@@ -25,7 +25,7 @@ Assistant: Based on the information provided, the correct option for the concent
 
 ### Extracted User Question Memory:
 {{
-    "key_facts_about_user": [
+    "user_question_refined_memory": [
         "User prefers decimal notation for medical concentrations. Future responses should convert percentage values (e.g., 0.5%) into decimals (e.g., 0.005).",
         "User relies on domain-specific abbreviations. Retain shorthand and technical terms where relevant.",
         "User expects a direct answer when listing multiple-choice options. The Assistant should avoid broad explanations when a clear choice is requested.",

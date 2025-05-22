@@ -36,7 +36,7 @@ Assistant: Based on the available information, the closest correct option is a) 
 ### Extracted Memory:
 
 {{
-    "key_criteria": [
+    "llm_response_refined_memory": [
         "Precise numerical representation improves user acceptance. Responses should use decimal values (0.005-0.01) when discussing concentrations.",
         "User prefers definitive answers over broad explanations. Responses should aim to validate choices rather than providing general information.",
         "Clarifications and corrections enhance trust. Acknowledging and refining earlier statements contributes to response acceptance.",
