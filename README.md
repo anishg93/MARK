@@ -1,6 +1,6 @@
 # MARK: Memory Augmented Refinement of Knowledge
 
-This repository contains the implementation of **MARK: Memory Augmented Refinement of Knowledge**, by Prabal Deb and Anish Ganguli, which has been accepted at Microsoft Journal of Applied Research (MSJAR) 2025. The open-source paper is available at **[arXiv:2505.05177](https://arxiv.org/abs/2505.05177)**.
+This repository contains the implementation of **MARK: Memory Augmented Refinement of Knowledge**, by Prabal Deb and Anish Ganguli, which has been accepted at Microsoft Journal of Applied Research (MSJAR) 2025. The public version of the paper is available at **[arXiv:2505.05177](https://arxiv.org/abs/2505.05177)**.
 
 
 ## Overview
