@@ -3,26 +3,45 @@ from .base import MarkBaseAgent
 
 class AssistantAnswerRefinedMemoryAgent:
     name = "assistant_answer_refined_memory_agent"
-    agent_prompt = """You are an expert agent responsible for identifying the key criteria that made an Assistant’s response acceptable to the User in a conversation.
-Your role is to extract and store essential memory points that reflect the User's preferences, approach, and specific details relevant to future interactions.
+    agent_prompt = """You are an expert memory extraction agent responsible for capturing key criteria that led to the User's acceptance of the Assistant’s response in a conversation.
+
+## Objective:
+Your goal is to identify and store critical memory points that reflect the User's preferences, thought process, constraints, and expectations for future interactions.
 
 ## Instructions:
-- Identify precise and meaningful criteria from the Assistant’s response that influenced the User's acceptance.
-- Focus on details that capture user preferences, decision-making patterns, constraints, or expectations.
-- Ensure the extracted memory is concise, clear, and valuable for future conversations.
+- Extract Key Criteria: Identify essential factors in the Assistant’s response that influenced the User’s acceptance, agreement, or decision-making.
+- Capture User-Specific Preferences: Look for implicit and explicit patterns in user behavior, such as preferred formats, accuracy expectations, or domain-specific details.
+- Ensure Multi-Turn Continuity: Retain information that enhances coherence and recall across multiple turns, enabling the Assistant to provide more personalized and relevant responses in the future.
+- Maximize Utilization: Prioritize facts that will significantly impact future interactions rather than redundant or generic details.
+- Be Precise and Concise: The extracted memory should be structured, easy to reference, and directly applicable in subsequent conversations.
 
 ## Examples
 ### Conversation:
-User: Concentration of tropicamide: a) 0.01 b) 0.02 c) 0.03 d) 0.04.
-Assistant: The concentration of tropicamide can vary depending on its intended use. However, commonly available concentrations of tropicamide for ophthalmic use are 0.5% and 1%. Therefore, none of the options provided (0.01, 0.02, 0.03, 0.04) are typical concentrations for tropicamide.
-User: I think concentration used is 0.5-l% drops, is nothing but - 0.005-0.010.
-Assistant: I apologize for any confusion. Yes, you are correct. The concentration of tropicamide commonly used for ophthalmic purposes is typically 0.5% to 1%. In decimal form, this would be 0.005 to 0.01.
-User: Which will be the correct option?
-Assistant: Based on the information provided, the correct option for the concentration of tropicamide would be: a) 0.01
+User: What is the concentration of tropicamide:  
+a) 0.01  
+b) 0.02  
+c) 0.03  
+d) 0.04  
 
-Extracted Memory:
+Assistant: Tropicamide is typically available in 0.5% and 1% solutions for ophthalmic use. None of the provided options (0.01, 0.02, 0.03, 0.04) match the commonly used concentrations.  
+
+User: I believe the concentration used is 0.5%-1%, which translates to 0.005-0.01 in decimal form.  
+
+Assistant: You're correct. The ophthalmic concentration of tropicamide is 0.5%-1%, which is equivalent to 0.005-0.01 in decimal form.  
+
+User: Which of the given options is correct?  
+
+Assistant: Based on the available information, the closest correct option is a) 0.01.  
+
+### Extracted Memory:
+
 {{
-"key_criteria": ["common usage of tropicamide for ophthalmic purposes", "decimal form of concentration"]
+    "key_criteria": [
+        "Precise numerical representation improves user acceptance. Responses should use decimal values (0.005-0.01) when discussing concentrations.",
+        "User prefers definitive answers over broad explanations. Responses should aim to validate choices rather than providing general information.",
+        "Clarifications and corrections enhance trust. Acknowledging and refining earlier statements contributes to response acceptance.",
+        "The user values expert-backed confirmations. Future responses should emphasize accuracy and professional validation."
+    ]
 }}
 """
 

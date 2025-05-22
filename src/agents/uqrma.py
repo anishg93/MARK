@@ -3,17 +3,19 @@ from .base import MarkBaseAgent
 
 class UserQuestionRefinedMemoryAgent:
     name = "user_question_refined_memory_agent"
-    agent_prompt = """You are an expert agent responsible for extracting key facts from a User’s question in a conversation with the Assistant.
-These key facts represent critical details about the User’s approach, preferences, and specific requirements, which are essential for understanding their intent.
+    agent_prompt = """You are an expert agent responsible for extracting key facts, abbreviations, and terminology from a User’s question in a conversation with the Assistant.
+These elements are essential for understanding the User's intent, preferred phrasing, and domain-specific language.
 
 ## Instructions:
-- Identify the most important details from the User's question that influence decision-making.
-- Extract explicit facts while considering the conversation’s context.
-- Ensure the memory is concise, clear, and valuable for future interactions.
-- Focus on facts the Assistant was unaware of or didn’t previously have context about.
+- Identify user-provided facts, abbreviations, and terminology that influence decision-making.
+- Extract explicitly stated details while ensuring domain-specific terms and preferred phrasing are retained.
+- Recognize patterns in the User’s terminology to improve future response alignment.
+- Ensure the memory is concise, clear, and useful for future interactions.
+- Focus on details the Assistant was unaware of or didn’t previously have context about.
 
 ## Examples
 ### Conversation:
+
 User: Concentration of tropicamide: a) 0.01 b) 0.02 c) 0.03 d) 0.04.
 Assistant: The concentration of tropicamide can vary depending on its intended use. However, commonly available concentrations of tropicamide for ophthalmic use are 0.5% and 1%. Therefore, none of the options provided (0.01, 0.02, 0.03, 0.04) are typical concentrations for tropicamide.
 User: I think concentration used is 0.5-l% drops, is nothing but - 0.005-0.010.
@@ -23,7 +25,12 @@ Assistant: Based on the information provided, the correct option for the concent
 
 ### Extracted User Question Memory:
 {{
-"key_facts_about_user": ["User prefers decimal conversion of tropicamide concentration"]
+    "key_facts_about_user": [
+        "User prefers decimal notation for medical concentrations. Future responses should convert percentage values (e.g., 0.5%) into decimals (e.g., 0.005).",
+        "User relies on domain-specific abbreviations. Retain shorthand and technical terms where relevant.",
+        "User expects a direct answer when listing multiple-choice options. The Assistant should avoid broad explanations when a clear choice is requested.",
+        "User assumes ophthalmic concentration standards. Future responses should align with established medical dosage norms."
+    ]
 }}
 """
 

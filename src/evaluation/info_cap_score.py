@@ -10,8 +10,8 @@ class InformationCaptureScore(EvaluationMetric):
         self.key_point_cov_score_client = KeyPointCoverageScore()
         self.info_cov_score_client = InformationCoverageScore()
         self.weights = {
-            "key_point_cov_score": 0.5,
-            "info_cov_score": 0.5
+            "key_point_cov_score": 0.9,
+            "info_cov_score": 0.1
         }
         self.info_cov_score = 0.0
         self.key_point_cov_score = 0.0

@@ -34,8 +34,8 @@ class MedMCQADataSet(Dataset):
             self.data = self.data[self.data["exp"].notnull()]
             # Remove rows where the question contains reasoning keyword "what"
             self.data = self.data[~self.data["question"].str.contains("what ", case=False)]
-            # Remove rows where the question token count is greater than 20
-            self.data = self.data[self.data["question"].apply(lambda x: len(self.tokenizer.encode(x)) <= 10)]
+            # Remove rows where the expected answer token count is greater than 32
+            self.data = self.data[self.data["exp"].apply(lambda x: len(self.tokenizer.encode(x)) <= 32)]
             if kwargs.get("limit"):
                 self.data = self.data.head(kwargs["limit"])
         self.data["options"] = self.data.apply(lambda x: "\n".join([f"{chr(97 + i)}) {x[f'op{chr(97 + i)}']}" for i in range(4)]), axis=1)

@@ -39,36 +39,65 @@ class AzureAISearch:
             return
         self.search_client.upload_documents(documents=[mem.to_dict() for mem in memories])
     
-    def search_memory(self, query: str, query_vector: list[float],
-                      type: str, user: str = None, top: int = 3, relevance_threshold: int = 0.7) -> list[Memory]:
+    def count_memories(self, type: str, user: str = None, agent: str = None, top: int = 200) -> int:
+        query_filter = f"type eq '{type}'"
+        if user:
+            query_filter += f" and user eq '{user}'"
+        if agent:
+            query_filter += f" and agent eq '{agent}'"
+        results = self.search_client.search(
+            search_text="",
+            filter=query_filter,
+            top=top,
+            select=["created_at"],
+        )
+        count = 0
+        for result in results:
+            count += 1
+        return count
+    
+    def search_memory(self, query: str, query_vector: list[float], type: str,
+                      user: str = None, agent: str = None, top: int = 3, relevance_threshold: int = 0.7) -> list[Memory]:
         search_vector = VectorizedQuery(vector=query_vector, k_nearest_neighbors=top, fields="memoryVector")
         query_filter = f"type eq '{type}'"
         if user:
             query_filter += f" and user eq '{user}'"
-        result = self.search_client.search(
+        if agent:
+            query_filter += f" and agent eq '{agent}'"
+        results = self.search_client.search(
             search_text=query,
             vector_queries=[search_vector],
             filter=query_filter,
             top=top,
-            select=["memory", "classification"])
+            select=["memory", "classification", "recall", "created_at"],
+        )
         memories = []
-        for result in result:
+        for result in results:
             if result["@search.score"] < relevance_threshold:
                 continue
-            if type == ResidualMemory.type:
+            if type == "residual":
                 memory = ResidualMemory(
                     memory=result["memory"],
-                    classification=result["classification"]
+                    classification=result["classification"],
+                    recall=result["recall"],
+                    created_at=result["created_at"],
+                    search_score=result["@search.score"],
                 )
-            elif type == UserQuestionMemory.type:
+            elif type == "user_question":
                 memory = UserQuestionMemory(
                     memory=result["memory"],
-                    classification=result["classification"]
+                    classification=result["classification"],
+                    recall=result["recall"],
+                    created_at=result["created_at"],
+                    search_score=result["@search.score"],
                 )
-            elif type == AssistantResponseMemory.type:
+            elif type == "assistant_response":
                 memory = AssistantResponseMemory(
                     memory=result["memory"],
-                    classification=result["classification"]
+                    classification=result["classification"],
+                    recall=result["recall"],
+                    created_at=result["created_at"],
+                    search_score=result["@search.score"],
                 )
             else:
                 raise ValueError(f"Invalid memory type: {type}")
@@ -82,9 +111,12 @@ class AzureAISearch:
 
         fields = [
             SimpleField(name="id", type=SearchFieldDataType.String, key=True),
-            SimpleField(name="type", type=SearchFieldDataType.String),
-            SimpleField(name="user", type=SearchFieldDataType.String),
-            SimpleField(name="classification", type=SearchFieldDataType.String),
+            SimpleField(name="type", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(name="user", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(name="agent", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(name="recall", type=SearchFieldDataType.Int32, filterable=True),
+            SimpleField(name="classification", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(name="created_at", type=SearchFieldDataType.DateTimeOffset, filterable=True),
             SearchableField(name="memory", type=SearchFieldDataType.String),
             SearchField(
                 name="memoryVector",
