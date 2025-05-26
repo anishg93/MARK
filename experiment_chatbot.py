@@ -12,7 +12,7 @@ from autogen_agentchat.messages import TextMessage
 from autogen_core.models import RequestUsage
 
 from src.agents.cba import ChatbotAgent
-from src.persistence.database_setup import DataPersistence
+from src.chat_history.database_setup import ChatHistoryDatabase
 from src.memory.azure_ai_search import AzureAISearch
 from src.service.memory_builder import MemoryBuilder
 
@@ -49,7 +49,7 @@ memory_builder = MemoryBuilder(
     embedding_client=az_embedding_client,
     embedding_model=az_embedding_model
 )
-data_persistence = DataPersistence(enable_storage_provider=False)
+chat_history_storage = ChatHistoryDatabase(enable_storage_provider=False)
 print("================Initialization Complete===============")
 
 def get_memory(query: str, top: int = 2, threshold: float = 0.02) -> str:
@@ -83,7 +83,7 @@ def get_memory(query: str, top: int = 2, threshold: float = 0.02) -> str:
 
 @cl.data_layer
 def get_data_layer():
-    return SQLAlchemyDataLayer(conninfo=data_persistence.get_connection_url_async(), storage_provider=data_persistence.get_storage_provider())
+    return SQLAlchemyDataLayer(conninfo=chat_history_storage.get_connection_url_async(), storage_provider=chat_history_storage.get_storage_provider())
 
 @cl.password_auth_callback
 def password_auth_callback(username: str, password: str) -> bool:

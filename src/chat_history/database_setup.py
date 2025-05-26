@@ -7,7 +7,7 @@ from chainlit.data.storage_clients.base import BaseStorageClient
 
 from src.utils.constants import Constants
 
-class DataPersistence:
+class ChatHistoryDatabase:
     storage_provider = None
     connection_string = None
     sqlite_db_path = "sqlite:///" + os.path.join(os.path.dirname(os.path.abspath(__file__)), Constants.sqlite_db_file_name)
